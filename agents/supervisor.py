@@ -3,14 +3,16 @@ A set of custom Agents to be implemented here. They inheret from the BaseAgent.
 """
 
 # native python
-from typing import Dict, Any
 import os
 # repo specific modules and libraries
 from config import Config
 from agents.base_agent import BaseAgent, AgentState
-# Exotic libraries
+from prompt_reference.supervisor_prompt import SupervisorPrompts
+from utils.handle_configs import get_llm
+# third party libraries
 from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_ibm import ChatWatsonx
+from langgraph.graph import END
+
 
 
 class SupervisorAgent(BaseAgent):
@@ -21,108 +23,69 @@ class SupervisorAgent(BaseAgent):
 
         super().__init__(name)
 
-        # instantiate the parameters for router part of the agent. 
-        self.router_params = Config.supervisor_router_params
-        self.model_id = self.router_params['model_id']
-        self.model_params = self.router_params['model_parameters']
-        self.router_llm = ChatWatsonx(
-            model_id=self.model_id,
-                url=os.environ["WATSONX_URL"],
-                apikey=os.environ["IBM_CLOUD_APIKEY"],
-                project_id=os.environ["WATSONX_PROJECT_ID"],
-                params=self.model_params
-            )
+        # instantiate the parameters for supervisor agent. 
+        self.supervisor_params = Config.supervisor_params
+        self.llm = get_llm(self.supervisor_params)
+    
 
+    def handle_input(self, state: AgentState):
 
-        self.router_system_message = SystemMessage(content="""You are an excellent routing agent. Route the query to 'maximo', 'vector_db', or 'unknown' based on which source the query is best answered by. 
-                                            To help you make that decision, look for key words in the query that is most closely associated to one of those systems.
-                                            Ensure that You only provide single word answer with one of the following: 'maximo', 'vector_db', 'unknown'.
-                                            Use the examples below to help you.
-                                            <example>
-                                            user_input: How many assets have been reported damaged over the past three days for customer x?
-                                            response: maximo
-                                            </example>
-                                            <example2>
-                                            user_input: Which documents will help me troubleshoot a problem regarding orders in the system?
-                                            response: vector_db
-                                            </example2>
-                                            <example3>
-                                            user_input: How do I get to the coventry?
-                                            response: unknown.
-                                            </example3>
-                                            Now classify the user input below.
-                                            user_input: {user_input}
-                                            response:""")
+        """To be implemented"""
+        # instantiate the prompt with the state.
+        user_input = state['user_input']
         
-        # instantiate the parameters for the evaluation part of the agent.        # instantiate the parameters for router part of the agent. 
-        self.evaluator_params = Config.supervisor_evaluator_params
-        self.model_id = self.evaluator_params['model_id']
-        self.model_params = self.evaluator_params['model_parameters']
-        self.evaluator_llm = ChatWatsonx(
-            model_id=self.model_id,
-                url=os.environ["WATSONX_URL"],
-                apikey=os.environ["IBM_CLOUD_APIKEY"],
-                project_id=os.environ["WATSONX_PROJECT_ID"],
-                params=self.model_params
-            )
-        
-        self.evaluation_prompt = SystemMessage(content="""You are an excellent supervisor and a friendly customer facing assistant. 
-                                                You are tasked with evaluating the response from an agent.
-                                                You will receive a user input and the response from an agent. 
-                                                Your job is to evaluate if the response is suitably relevant to the user input or query.
-                                                If the response has relevant answers to the query, ensure it is expressed in a very friendly style to be provided to the human user.
-                                                If the response is not relevant to the user input, provide the answer in a friendly style to the user, and if there are some pieces of information in the query from the user that could help in answering the query. Gently nudge them to provide it.
-                                                Do not provide your reasoning or any other information outside of the main response.
-                                                Use the examples below to help you.
-                                                <example>
-                                                user_input: How many work orders have been reported damaged over the past three days in site Bedford?
-                                                response: The number of assets reported damaged over the past three days in site Bedford is 5.
-                                                </example>
-                                                response_to_evaluate: {response}
-                                                evaluation:""")
+        # initialize the states if it does not already contain a value to be updated later.
+        if 'maximo_payload' not in state:
+            state.setdefault('maximo_payload', '')
+        if 'maximo_agent_response' not in state:
+            state.setdefault('maximo_agent_response', '')
+        if 'vector_db_agent_response' not in state:
+            state.setdefault('vector_db_agent_response', '')
+        if 'tool_calls' not in state:
+            state.setdefault('tool_calls', '')
 
 
-    def supervisor_router(self, state: AgentState) -> str:
-        user_input = HumanMessage(
-            content=f"{state['user_input']}"
+        agent_response = str(state['maximo_agent_response']) + '\n' + str(state['vector_db_agent_response'])
+
+        system_message = SupervisorPrompts.supervisor_prompt.format(
+            user_input=user_input,
+            agent_response=agent_response
         )
-        messages = [
-            self.router_system_message,
-            user_input
+
+        message = [
+            SystemMessage(content=system_message),
+            HumanMessage(content=state['user_input'])
         ]
-        response = self.router_llm.invoke(messages)
-        if 'maximo' in response.content.lower():
-            state['supervisor_decision'] = "maximo"
-        elif 'vector_db' in response.content.lower():
-            state['supervisor_decision'] = "vector_db"
+
+        # call the llm with the message.
+        supervisor_response = self.llm.invoke(message).content
+
+        # update the state with the supervisor response.
+        state.setdefault('memory_chain', []).append({'supervisor_response': supervisor_response})
+
+        routing_options = ['maximo', 'vector_db', 'unknown']
+        if supervisor_response in routing_options:
+            state.setdefault('supervisor_decision', '')
+            state['supervisor_decision'] = supervisor_response
+
         else:
-            state['supervisor_decision'] = "unknown"
-        state['supervisor_decision'] = response.content.lower()
-        state['memory_chain'].append({
-            "input": state['user_input'],
-            "supervisor_decision": state['supervisor_decision'],
-        })
+            state.setdefault('final_response', '')
+            state['final_response'] = supervisor_response
 
-        return {
-            "supervisor_decision": state['supervisor_decision']
-        }
+        return state
 
+        
+    @staticmethod
+    def router(state: AgentState):
 
-    def supervisor_evaluation(self, state: AgentState) -> bool:
-        user_input = HumanMessage(
-            content=f"{state['user_input']}"
-        )
-        messages = [
-            self.evaluation_prompt,
-            user_input,
-            HumanMessage(content=f"{state['maximo_agent_response'] or state['vector_search_result']}")
-        ]
-        result = self.evaluator_llm.invoke(messages)
-        # update the state with the evaluation result.
-        state['final_response'] = result.content
-        state['memory_chain'].append({
-            'final_response': result.content
-        })
-        return {
-            "evaluation": result.content
-        }
+        decision = state.get('supervisor_decision', '')
+
+        if 'final_response' in state:
+            return END
+        if "maximo" in decision:
+            return "maximo"
+        elif "vector_db" in decision:
+            return "vector_db"
+        elif 'unknown' in decision:
+            return "unknown"
+        
