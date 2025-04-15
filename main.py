@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+_ = load_dotenv()
+
 from src.build_graph import build_graph
 
 
@@ -11,9 +14,11 @@ if __name__ == "__main__":
     print("Graph has been built and saved as graph_output.png")
 
     # for vectordb test
-    user_input="What are some issues with noise on a ventilation system?"
+    # user_input="What are some issues with noise on a ventilation system?"
     # for maximo test
     # user_input = "What is the status, description and priority of work order number 5012?"
+    # for unknown test
+    user_input = "How many people does it take to carry out a moon landing?"
     result = graph.invoke(
             {
                 "user_input": user_input

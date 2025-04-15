@@ -16,3 +16,4 @@ streamlit
 pymilvus
 chromadb
 pypdf
+pygraphviz
