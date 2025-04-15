@@ -22,7 +22,7 @@ def build_graph():
     graph.add_conditional_edges(
         "supervisor",
         supervisor.router, 
-        {"maximo": "maximo_agent","vector_db": "vector_db_agent", END: END}
+        {"maximo": "maximo_agent","vector_db": "vector_db_agent", "unknown": "supervisor", END: END}
     )
     graph.add_edge("maximo_agent", "supervisor")
     graph.add_edge("vector_db_agent", "supervisor")
