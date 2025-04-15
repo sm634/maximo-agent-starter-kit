@@ -65,8 +65,15 @@ class MaximoAgent(BaseAgent):
             
             # update the state with the agent response
             state.setdefault('tool_calls','')
-            if hasattr(agent_response, 'tool_calls'): 
-                state['tool_calls'] = agent_response.tool_calls[0]['name']
+            if hasattr(agent_response, 'tool_calls'):
+                try:
+                    state['tool_calls'] = agent_response.tool_calls[0]['name']
+                except IndexError:
+                    # try again
+                    agent_response = self.llm_with_tools.invoke(message)
+                    state['tool_calls'] = agent_response.tool_calls[0]['name']
+                    pass
+
                 state = self.use_maximo_tools(state=state)
             else:
                 break

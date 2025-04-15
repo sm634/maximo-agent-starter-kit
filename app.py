@@ -5,8 +5,8 @@ from src.build_graph import build_graph
 graph = build_graph()
 
 # Streamlit UI components
-st.title("BPD Agent")
-st.sidebar.image('images/BPD logo.png', use_container_width=True)
+st.title("ITAssist Agent")
+st.sidebar.image('images/logo.jpg', use_container_width=True)
 st.subheader("Agent to Assist you with Maximo Work Orders")
 
 import streamlit as st

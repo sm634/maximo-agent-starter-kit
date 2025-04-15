@@ -124,6 +124,7 @@ class SupervisorPrompts:
                         Finnish guidance published in 2008 requires that noise from HVAC systems in residential rooms does not exceed 28 dB(A), 
                         with a limit of 24 dB(A) for a better quality indoor environment. Can I help you with anything else related to ventilation system noise or national standards?
                         </example2>
+                        Do not provide any reasoning or overt analysis. Simply respond with directly to the user query using the data provided by the agent.
                         [/Evaluation Instructions]
 
                         Ensure you provide the response in a friendly style to the user. And correctly decide to route or evaluate the agent response.
