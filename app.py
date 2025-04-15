@@ -1,12 +1,17 @@
+# load environment variables
+from dotenv import load_dotenv
+_ = load_dotenv()
+
 import streamlit as st
 from src.build_graph import build_graph
+
 
 # initiate the graph_build
 graph = build_graph()
 
 # Streamlit UI components
-st.title("ITAssist Agent")
-st.sidebar.image('images/logo.jpg', use_container_width=True)
+st.title("BPD Agent")
+st.sidebar.image('images/BPD logo.png', use_container_width=True)
 st.subheader("Agent to Assist you with Maximo Work Orders")
 
 import streamlit as st

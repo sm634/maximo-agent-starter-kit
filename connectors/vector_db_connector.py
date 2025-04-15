@@ -15,6 +15,7 @@ class ChromaDB():
         self.embedding_model = "ibm-granite/granite-embedding-30m-english"
         self.persist_directory = "./chroma_db"
         self.embedding_function = HuggingFaceEmbeddings(model_name="ibm-granite/granite-embedding-30m-english")
+        self.pdf_path = "data/ventilation_doc.pdf"
     
     def ingest_documents(self, pdf_path="data/ventilation_doc.pdf", chunk_size=500, chunk_overlap=50):
         # Load the PDF document
