@@ -63,7 +63,8 @@ class ChromaAgent(BaseAgent):
         if selected_tool == "search":
             # set the input parameters or arguments for the tool.
             tool_input = {
-                "user_input": state['user_input']
+                "user_input": state['user_input'],
+                "collection": "pdf_collection"
             }
 
             # invoke the tool and get the result.

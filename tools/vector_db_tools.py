@@ -1,7 +1,7 @@
 from connectors.vector_db_connector import ChromaDB
 
 from pydantic import BaseModel, Field
-from typing import Dict, Union
+from typing import Dict, Union, Any
 from langchain.agents import tool
 
 
@@ -9,6 +9,7 @@ class VectorAgentTools:
 
     class SearchInput(BaseModel):
         user_input: Union[Dict, str] = Field(description="The payload to be sent to Maximo.")
+        collection: Any = Field(description="The collection to search on")
 
     @tool(args_schema=SearchInput)
     def search(user_input: str, collection='pdf_collection'):

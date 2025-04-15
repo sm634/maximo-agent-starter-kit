@@ -1,4 +1,6 @@
 import argparse
+from dotenv import load_dotenv
+_ = load_dotenv()
 
 from tests.test_api import test_get_maximo_data, test_update_maximo_data 
 from tests.test_llms import (
