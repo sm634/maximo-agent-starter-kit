@@ -17,7 +17,7 @@ class ChromaDB():
         self.embedding_function = HuggingFaceEmbeddings(model_name="ibm-granite/granite-embedding-30m-english")
         self.pdf_path = "data/ventilation_doc.pdf"
     
-    def ingest_documents(self, pdf_path="data/ventilation_doc.pdf", chunk_size=500, chunk_overlap=50):
+    def ingest_documents(self, pdf_path, collection_name="pdf_collection", chunk_size=500, chunk_overlap=50):
         # Load the PDF document
         loader = PyPDFLoader(pdf_path)
         documents = loader.load()
@@ -28,7 +28,7 @@ class ChromaDB():
 
         # Create the Chroma vector store
         vectordb = Chroma(
-            collection_name="pdf_collection",
+            collection_name=collection_name,
             embedding_function=self.embedding_function,
             persist_directory=self.persist_directory
         )
@@ -38,9 +38,9 @@ class ChromaDB():
 
         print(f"Successfully ingested {len(docs)} chunks into Chroma at '{self.persist_directory}'.")
 
-    def search(self, query):
+    def search(self, query, collection='pdf_collection'):
         vectordb = Chroma(
-        collection_name='pdf_collection',
+        collection_name=collection,
         persist_directory=self.persist_directory,
         embedding_function=self.embedding_function
         )

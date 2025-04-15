@@ -11,7 +11,7 @@ class VectorAgentTools:
         user_input: Union[Dict, str] = Field(description="The payload to be sent to Maximo.")
 
     @tool(args_schema=SearchInput)
-    def search(user_input: str):
+    def search(user_input: str, collection='pdf_collection'):
         """
         Perform search on a vector db.
         :user_input: the query to search in the vector db.
@@ -19,6 +19,6 @@ class VectorAgentTools:
         """
 
         vector_db = ChromaDB()
-        response = vector_db.search(query=user_input)
+        response = vector_db.search(query=user_input, collection=collection)
         results = [doc.page_content for doc in response]
         return results
