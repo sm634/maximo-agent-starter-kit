@@ -14,7 +14,7 @@ cd ...\maximo-agent-starter-kit
 2. Run the following conda command:
 
 ```
-conda env create -f environment.yaml
+conda env create -f environment.yml
 ```
 
 3. Activate the environment:
