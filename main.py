@@ -13,22 +13,22 @@ if __name__ == "__main__":
     
     print("Graph has been built and saved as graph_output.png")
 
-    # for vectordb test
-    user_input="What are some issues with noise on a ventilation system?"
-    # for maximo test
-    # user_input = "How many work orders were recorded to have priority 1 in december 31, 1998?"
-    result = graph.invoke(
-            {
-                'user_input': user_input,
-                'supervisor_decision': '',
-                'maximo_payload': '',
-                'tool_calls': '',
-                'maximo_agent_response': '',
-                'vector_db_agent_response': '',
-                'final_response': '',
-                'memory_chain': []
-            }
-        )
-    print(result)
+    # # for vectordb test
+    # user_input="What are some issues with noise on a ventilation system?"
+    # # for maximo test
+    # # user_input = "How many work orders were recorded to have priority 1 in december 31, 1998?"
+    # result = graph.invoke(
+    #         {
+    #             'user_input': user_input,
+    #             'supervisor_decision': '',
+    #             'maximo_payload': '',
+    #             'tool_calls': '',
+    #             'maximo_agent_response': '',
+    #             'vector_db_agent_response': '',
+    #             'final_response': '',
+    #             'memory_chain': []
+    #         }
+    #     )
+    # print(result)
 
-    breakpoint()
+    # breakpoint()
