@@ -97,7 +97,18 @@ def test_supervisor_response():
 def test_full_maximo_run():
 
     user_input="How many priority 1 are there for work orders in december 31, 1998? "
-    state = AgentState(user_input=user_input)
+    state = AgentState(
+        {
+            'user_input': user_input,
+            'supervisor_decision': '',
+            'maximo_payload': '',
+            'tool_calls': '',
+            'maximo_agent_response': '',
+            'vector_db_agent_response': '',
+            'final_response': '',
+            'memory_chain': []
+        }
+    )
     supervisor = SupervisorAgent()
     state = supervisor.handle_input(state=state)
 
@@ -115,7 +126,18 @@ def test_full_maximo_run():
 def test_full_vector_db_run():
 
     user_input="What are some issues with noise on a ventilation system?"
-    state = AgentState(user_input=user_input)
+    state = AgentState(
+            {
+                'user_input': user_input,
+                'supervisor_decision': '',
+                'maximo_payload': '',
+                'tool_calls': '',
+                'maximo_agent_response': '',
+                'vector_db_agent_response': '',
+                'final_response': '',
+                'memory_chain': []
+            }
+    )
     supervisor = SupervisorAgent()
     state = supervisor.handle_input(state=state)
 

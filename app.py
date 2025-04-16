@@ -33,9 +33,18 @@ if query:
         )
     # Generate response (can still show spinner)
     with st.spinner("Generating response..."):
-        result = graph.invoke({
-            "user_input": query
-        })
+        result = graph.invoke(            
+            {
+                'user_input': query,
+                'supervisor_decision': '',
+                'maximo_payload': '',
+                'tool_calls': '',
+                'maximo_agent_response': '',
+                'vector_db_agent_response': '',
+                'final_response': '',
+                'memory_chain': []
+            }
+        )
 
     response = result['final_response']
 

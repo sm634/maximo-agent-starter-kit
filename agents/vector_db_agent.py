@@ -35,24 +35,22 @@ class ChromaAgent(BaseAgent):
         """
 
         # use the tools to get the results and responses before getting back to the supervisor.
-        while state['vector_db_agent_response'] == "":
-            system_msg = vector_db_prompt.format(state=state)
-            message = [
-                SystemMessage(content=system_msg),
-                HumanMessage(content=f"{state['user_input']}")
-            ]
-            # call the llm with the message
-            agent_response = self.llm_with_tools.invoke(message)
+        system_msg = vector_db_prompt.format(state=state)
+        message = [
+            SystemMessage(content=system_msg),
+            HumanMessage(content=f"{state['user_input']}")
+        ]
+        # call the llm with the message
+        agent_response = self.llm_with_tools.invoke(message)
 
-            # update the state with the agent response
-            state.setdefault('tool_calls', '')
-            if hasattr(agent_response, 'tool_calls'):
+        # update the state with the agent response
+        if hasattr(agent_response, 'tool_calls'):
+            try:
                 state['tool_calls'] = agent_response.tool_calls[0]['name']
-                state = self.use_vector_db_tools(state=state)
-            else:
-                break
+            except IndexError:
+                pass
 
-        return {'vector_db_agent_response': state['vector_db_agent_response']}
+        return state
     
 
     def use_vector_db_tools(self, state: AgentState):
@@ -77,10 +75,17 @@ class ChromaAgent(BaseAgent):
             })
 
         return state
+    
+    @staticmethod
+    def router(state: AgentState):
+        if len(state['vector_db_agent_response']) < 1:
+            return "vector_db_tools"
+        else:
+            return "supervisor"
 
 
 class MilvusAgent(BaseAgent):
-    def __init__(self, name="vector_db"):
+    def __init__(self, name="vector_db_agent"):
         
         super().__init__(name)
 

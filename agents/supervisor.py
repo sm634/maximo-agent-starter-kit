@@ -33,23 +33,20 @@ class SupervisorAgent(BaseAgent):
         """To be implemented"""
         # instantiate the prompt with the state.
         user_input = state['user_input']
-        
-        # initialize the states if it does not already contain a value to be updated later.
-        if 'maximo_payload' not in state:
-            state.setdefault('maximo_payload', '')
-        if 'maximo_agent_response' not in state:
-            state.setdefault('maximo_agent_response', '')
-        if 'vector_db_agent_response' not in state:
-            state.setdefault('vector_db_agent_response', '')
-        if 'tool_calls' not in state:
-            state.setdefault('tool_calls', '')
 
-
+        # combine responses, will return a string if child agent responses are available. Otherwise, will concat empty strings.
         agent_response = str(state['maximo_agent_response']) + '\n' + str(state['vector_db_agent_response'])
+        
+        # to ensure a supervisor has already routed to an agent and keep track of that.
+        if state['supervisor_decision'] != '':
+            agents_consulted = 'yes'
+        else:
+            agents_consulted = 'no'
 
         system_message = SupervisorPrompts.supervisor_prompt.format(
             user_input=user_input,
-            agent_response=agent_response
+            agent_response=agent_response,
+            agents_consulted=agents_consulted
         )
 
         message = [
@@ -61,15 +58,14 @@ class SupervisorAgent(BaseAgent):
         supervisor_response = self.llm.invoke(message).content
 
         # update the state with the supervisor response.
-        state.setdefault('memory_chain', []).append({'supervisor_response': supervisor_response})
+        state['memory_chain'].append({'supervisor_response': supervisor_response})
 
-        routing_options = ['maximo', 'vector_db', 'unknown']
-        if supervisor_response in routing_options:
-            state.setdefault('supervisor_decision', '')
-            state['supervisor_decision'] = supervisor_response
-
+        # safe force routing.
+        if 'maximo' in supervisor_response:
+            state['supervisor_decision'] = 'maximo'
+        elif 'vector_db' in supervisor_response:
+            state['supervisor_decision'] = 'vector_db'
         else:
-            state.setdefault('final_response', '')
             state['final_response'] = supervisor_response
 
         return state
@@ -77,15 +73,16 @@ class SupervisorAgent(BaseAgent):
         
     @staticmethod
     def router(state: AgentState):
+        """Routing based on supervisor's response"""
 
-        decision = state.get('supervisor_decision', '')
-
-        if 'final_response' in state:
+        decision = state['supervisor_decision']
+ 
+        if len(state['final_response']) > 1:
             return END
         if "maximo" in decision:
-            return "maximo"
+            return "maximo_agent"
         elif "vector_db" in decision:
-            return "vector_db"
+            return "vector_db_agent"
         elif 'unknown' in decision:
-            return "unknown"
+            return "supervisor"
         

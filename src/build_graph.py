@@ -11,24 +11,43 @@ def build_graph():
     graph = StateGraph(AgentState)
 
     supervisor = SupervisorAgent()
-    maximo = MaximoAgent()
-    vector_db = ChromaAgent()
+    maximo_agent = MaximoAgent()
+    vector_db_agent = ChromaAgent()
 
-    # Add nodes to the graph
-    graph.add_node("supervisor", supervisor.handle_input)
-    graph.add_node("maximo_agent", maximo.handle_input)
-    graph.add_node("vector_db_agent", vector_db.handle_input)
+    # Add agent to the graph
+    graph.add_node(supervisor.name, supervisor.handle_input)
+    graph.add_node(maximo_agent.name, maximo_agent.handle_input)
+    graph.add_node(vector_db_agent.name, vector_db_agent.handle_input)
+    # Add tools nodes
+    graph.add_node("maximo_tools", maximo_agent.use_maximo_tools)
+    graph.add_node("vector_db_tools", vector_db_agent.use_vector_db_tools)
 
+    # add edges and conditional edges (requires a router function that does not return the state)
     graph.add_conditional_edges(
-        "supervisor",
+        supervisor.name,
         supervisor.router, 
-        {"maximo": "maximo_agent","vector_db": "vector_db_agent", "unknown": "supervisor", END: END}
+        {
+            maximo_agent.name: maximo_agent.name, 
+            vector_db_agent.name: vector_db_agent.name, 
+            "unknown": supervisor.name, 
+            END: END
+        }
     )
-    graph.add_edge("maximo_agent", "supervisor")
-    graph.add_edge("vector_db_agent", "supervisor")
+    graph.add_conditional_edges(
+        maximo_agent.name, 
+        maximo_agent.router,
+        {"maximo_tools": "maximo_tools", supervisor.name: supervisor.name}
+    )
+    graph.add_conditional_edges(
+        vector_db_agent.name,
+        vector_db_agent.router,
+        {"vector_db_tools": "vector_db_tools", supervisor.name: supervisor.name}
+    )
+    graph.add_edge("maximo_tools", maximo_agent.name)
+    graph.add_edge("vector_db_tools", vector_db_agent.name)
 
 
-    graph.set_entry_point("supervisor")
-    graph.set_finish_point("supervisor")
+    graph.set_entry_point(supervisor.name)
+    graph.set_finish_point(supervisor.name)
 
     return graph.compile()

@@ -13,12 +13,12 @@ from config import Config
 
 
 class MaximoAgent(BaseAgent):
-    def __init__(self, name="maximo"):
+    def __init__(self, name="maximo_agent"):
         """
         An agent specialised on performing operations on Maximo.
         """
         super().__init__(name)
-
+        
         # instantiate maximo connector.
         self.maximo_connector = MaximoConnector()
 
@@ -52,34 +52,23 @@ class MaximoAgent(BaseAgent):
         """
 
         # use the tools to get the results and responses before getting back to the supervisor.
-        while (len(state['maximo_payload']) and len(state['maximo_agent_response'])) < 1:
+        # instantiate the prompt with the state. Each loop should update the state.
+        system_message = MaximoAgentPrompts.maximo_agent_prompt.format(state=state)
+        message = [
+            SystemMessage(content=system_message),
+            HumanMessage(content=f"{state['user_input']}")
+        ]
+        # call the llm with the message.
+        agent_response = self.llm_with_tools.invoke(message)
+        
+        # update the state with the agent response
+        if hasattr(agent_response, 'tool_calls'):
+            try:
+                state['tool_calls'] = agent_response.tool_calls[0]['name']
+            except IndexError:
+                pass
 
-            # instantiate the prompt with the state. Each loop should update the state.
-            system_message = MaximoAgentPrompts.maximo_agent_prompt.format(state=state)
-            message = [
-                SystemMessage(content=system_message),
-                HumanMessage(content=f"{state['user_input']}")
-            ]
-            # call the llm with the message.
-            agent_response = self.llm_with_tools.invoke(message)
-            
-            # update the state with the agent response
-            state.setdefault('tool_calls','')
-            if hasattr(agent_response, 'tool_calls'):
-                try:
-                    state['tool_calls'] = agent_response.tool_calls[0]['name']
-                except IndexError:
-                    # try again
-                    agent_response = self.llm_with_tools.invoke(message)
-                    state['tool_calls'] = agent_response.tool_calls[0]['name']
-                    pass
-
-                state = self.use_maximo_tools(state=state)
-            else:
-                break
-
-        return {'maximo_payload': state['maximo_payload'],
-                'maximo_agent_response': state['maximo_agent_response']}
+        return state
 
 
     def use_maximo_tools(self, state: AgentState):
@@ -117,7 +106,7 @@ class MaximoAgent(BaseAgent):
             maximo_payload = self.tools_dict[selected_tool].invoke(tool_input)
             # update the state with the tool result.
             state['maximo_payload'] = maximo_payload
-            state.setdefault('memory_chain',[]).append({
+            state['memory_chain'].append({
                 'maximo_payload': state['maximo_payload'],
             })
 
@@ -131,8 +120,7 @@ class MaximoAgent(BaseAgent):
         :return: A dictionary containing the action taken.
         """
 
-        if (len(state['maximo_payload']) and len(state['maximo_agent_response'])) < 1:
-            state['memory_chain'].append({'tool_calls': state['tool_calls']})
+        if len(state['maximo_agent_response']) < 1:
             return "maximo_tools"
         else:
             return "supervisor"
