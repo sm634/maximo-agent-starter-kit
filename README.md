@@ -1,5 +1,5 @@
 # Maximo Agent Starter Kit
-A AI Agents template that has tools to complete some operations on Maximo and perform RAG.
+An AI Agents template that has tools to complete some operations on Maximo and perform RAG.
 
 ## Environment Set-up
 
