@@ -18,6 +18,8 @@ class AgentState(TypedDict):
     supervisor_decision: Optional[str] = None
     maximo_payload: Optional[str] = None
     tool_calls: Optional[str] = None
+    agent_tool_retries: Optional[int] = None
+    agent_max_tool_retries: Optional[int] = None
     maximo_agent_response: Optional[str] = None
     vector_db_agent_response: Optional[str] = None
     final_response: Optional[str] = None

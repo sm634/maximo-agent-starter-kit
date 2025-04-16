@@ -2,8 +2,6 @@
 A set of custom Agents to be implemented here. They inheret from the BaseAgent.
 """
 
-# native python
-import os
 # repo specific modules and libraries
 from config import Config
 from agents.base_agent import BaseAgent, AgentState
@@ -60,11 +58,8 @@ class SupervisorAgent(BaseAgent):
         # update the state with the supervisor response.
         state['memory_chain'].append({'supervisor_response': supervisor_response})
 
-        # safe force routing.
-        if 'maximo' in supervisor_response:
-            state['supervisor_decision'] = 'maximo'
-        elif 'vector_db' in supervisor_response:
-            state['supervisor_decision'] = 'vector_db'
+        if supervisor_response.lower().replace(" ", "") in ['maximo', 'vector_db', 'unknown']:
+            state['supervisor_decision'] = supervisor_response
         else:
             state['final_response'] = supervisor_response
 

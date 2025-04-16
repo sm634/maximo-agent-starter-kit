@@ -39,6 +39,8 @@ if query:
                 'supervisor_decision': '',
                 'maximo_payload': '',
                 'tool_calls': '',
+                'agent_tool_retries': 0,
+                'agent_max_tool_retries': 4,
                 'maximo_agent_response': '',
                 'vector_db_agent_response': '',
                 'final_response': '',

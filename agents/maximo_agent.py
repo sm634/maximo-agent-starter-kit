@@ -83,13 +83,17 @@ class MaximoAgent(BaseAgent):
                 }
 
             # invoke the tool and get the result.
-            maximo_agent_response = self.tools_dict[selected_tool].invoke(tool_input)
+            try:
+                maximo_agent_response = self.tools_dict[selected_tool].invoke(tool_input)
+                # update the state with the tool result.
+                state['maximo_agent_response'] = maximo_agent_response
+                state['memory_chain'].append({
+                    'maximo_agent_response': state['maximo_agent_response'],
+                })
+            except:
+                state['agent_tool_retries'] +=1
+                pass
 
-            # update the state with the tool result.
-            state['maximo_agent_response'] = maximo_agent_response
-            state['memory_chain'].append({
-                'maximo_agent_response': state['maximo_agent_response'],
-            })
 
             return state
 
@@ -103,12 +107,17 @@ class MaximoAgent(BaseAgent):
             }
 
             # invoke the tool and get the result.
-            maximo_payload = self.tools_dict[selected_tool].invoke(tool_input)
-            # update the state with the tool result.
-            state['maximo_payload'] = maximo_payload
-            state['memory_chain'].append({
-                'maximo_payload': state['maximo_payload'],
-            })
+            try:    
+                maximo_payload = self.tools_dict[selected_tool].invoke(tool_input)
+                # update the state with the tool result.
+                state['maximo_payload'] = maximo_payload
+                state['memory_chain'].append({
+                    'maximo_payload': state['maximo_payload'],
+                })
+            except:
+                state['agent_tool_retries'] +=1
+                pass
+
 
             return state
 
@@ -120,7 +129,9 @@ class MaximoAgent(BaseAgent):
         :return: A dictionary containing the action taken.
         """
 
-        if len(state['maximo_agent_response']) < 1:
+        if state['agent_tool_retries'] > state['agent_max_tool_retries']:
+            return END
+        elif len(state['maximo_agent_response']) < 1:
             return "maximo_tools"
         else:
             return "supervisor"
