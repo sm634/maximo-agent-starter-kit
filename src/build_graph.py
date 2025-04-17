@@ -29,7 +29,7 @@ def build_graph():
         {
             maximo_agent.name: maximo_agent.name, 
             vector_db_agent.name: vector_db_agent.name, 
-            "unknown": supervisor.name, 
+            supervisor.name: supervisor.name, 
             END: END
         }
     )
